@@ -26,6 +26,30 @@ h1,h2,h3,button,label,.disp{font-family:var(--f-display)}
 @media (prefers-reduced-motion: reduce){ *{animation-duration:.001ms!important;transition-duration:.001ms!important} }
 
 .app{max-width:1280px;margin:0 auto;padding:0 20px 60px}
+.hidden{display:none!important}
+
+/* ---------- pantalla de inicio de sesión ---------- */
+.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:24px;background:var(--bg)}
+.login-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:32px 28px;
+  display:flex;flex-direction:column;gap:4px;text-align:center}
+.login-mark{align-self:center;width:44px;height:44px;border-radius:12px;background:var(--accent);
+  display:grid;place-items:center;margin-bottom:14px}
+.login-mark svg{width:24px;height:24px;stroke:var(--on-accent)}
+.login-card h1{font-size:19px;margin:0 0 4px;font-weight:700;letter-spacing:-.01em;line-height:1.3}
+.login-sub{font-size:13.5px;color:var(--muted);margin:0 0 20px}
+.login-card label{display:block;text-align:left;font-size:12px;font-weight:600;color:var(--ink-2);
+  margin:12px 0 5px}
+.login-card input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;
+  background:var(--surface);color:var(--ink);font-family:var(--f-body);font-size:14px}
+.login-card input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.login-card .btn{margin-top:20px}
+.login-hint{font-size:11px;color:var(--muted);line-height:1.5;margin:16px 0 0;text-align:left}
+
+.link-btn{border:none;background:none;color:var(--muted);font-family:var(--f-display);font-size:12px;
+  font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px;padding:4px}
+.link-btn:hover{color:var(--accent)}
 
 /* ---------- hero: título, problemática y solución ---------- */
 .hero{padding-block:48px 36px;border-bottom:1px solid var(--border)}

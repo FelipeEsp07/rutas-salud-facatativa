@@ -13,7 +13,26 @@
 <body>
 <div class="toasts" id="toasts"></div>
 
-<div class="app">
+<div class="login-screen" id="loginScreen">
+  <form class="login-card" id="loginForm">
+    <div class="login-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12Z"/><circle cx="12" cy="9" r="2.3"/></svg>
+    </div>
+    <h1>Rutas de atención rural, Facatativá</h1>
+    <p class="login-sub">Inicia sesión para continuar</p>
+
+    <label for="loginUser">Usuario</label>
+    <input type="text" id="loginUser" value="ebs-facatativa-01" autocomplete="username" required>
+
+    <label for="loginPass">Contraseña</label>
+    <input type="password" id="loginPass" value="secreto-demo-123" autocomplete="current-password" required>
+
+    <button class="btn" type="submit" id="loginBtn"><span id="loginBtnLabel">Iniciar sesión</span></button>
+    <p class="login-hint">Credenciales de demostración, ya diligenciadas, para esta sustentación académica. El inicio de sesión usa el flujo OAuth 2.0 real del microservicio (<span class="mono">POST /token</span>).</p>
+  </form>
+</div>
+
+<div class="app hidden" id="appRoot">
   <header class="hero">
     <h1>Rutas de atención rural, Facatativá</h1>
     <div class="hero-grid">
@@ -39,7 +58,10 @@
         <span class="screen-eyebrow">Herramienta interactiva</span>
         <h2>Genera la ruta de la jornada</h2>
       </div>
-      <div class="conn" id="conn"><span class="dot loading" id="connDot"></span><span id="connTxt">Conectando con la API…</span></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="conn" id="conn"><span class="dot loading" id="connDot"></span><span id="connTxt">Conectando con la API…</span></div>
+        <button class="link-btn" type="button" id="logoutBtn">Cerrar sesión</button>
+      </div>
     </div>
 
     <div class="layout">
@@ -147,11 +169,13 @@
     <div class="layout">
       <aside class="sidebar">
         <section class="panel">
-          <h2><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Cliente OAuth 2.0 activo</h2>
+          <h2><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Sesión activa</h2>
           <p class="kv">
             <span class="mono" id="clientInfo">—</span><br><br>
-            Credenciales de demostración, visibles solo para esta sustentación académica.
-            En producción, el frontend nunca debería guardar un <span class="mono">client_secret</span>.
+            El inicio de sesión usa el flujo OAuth 2.0 <span class="mono">client_credentials</span> del
+            microservicio (<span class="mono">POST /token</span>). Son credenciales de demostración,
+            visibles solo para esta sustentación académica; en un despliegue real, la contraseña nunca
+            debería quedar precargada en el formulario.
           </p>
         </section>
       </aside>

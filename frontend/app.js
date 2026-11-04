@@ -2,15 +2,18 @@
  * Frontend real del microservicio: todo lo que se ve aquí viene de llamadas
  * HTTP de verdad a la API (no hay datos quemados en este archivo).
  *
- * Nota de seguridad para la sustentación: estas son credenciales de DEMO
- * (las mismas de .env.example). En un despliegue real, el client_secret
- * nunca debería vivir en el navegador; lo normal es que un backend propio
- * del EBS (no este frontend estático) guarde el secreto y llame a /rutas
- * en nombre del coordinador.
+ * El inicio de sesión llama al POST /token real del backend (OAuth 2.0,
+ * flujo client_credentials: usuario = client_id, contraseña = client_secret).
+ * El formulario trae precargadas las credenciales de demostración, pero es
+ * un login de verdad: si se cambian por unas inválidas, el backend lo rechaza.
+ *
+ * Nota de seguridad para la sustentación: en un despliegue real, el
+ * client_secret nunca debería tipearse en un formulario público así; lo
+ * normal es que un backend propio del EBS guarde el secreto y llame a
+ * /rutas en nombre del coordinador ya autenticado por otro medio (p. ej.
+ * usuario y contraseña personales contra un directorio institucional).
  */
 const API_BASE = window.location.origin;
-const DEMO_CLIENT_ID = "ebs-facatativa-01";
-const DEMO_CLIENT_SECRET = "secreto-demo-123";
 
 const $ = (id) => document.getElementById(id);
 const fmt = (n, d = 1) => Number(n).toLocaleString("es-CO", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -50,14 +53,15 @@ function setConexion(ok, texto) {
   $("connTxt").textContent = texto;
 }
 
-async function pedirToken() {
+async function pedirToken(usuario, contrasena) {
   const body = new URLSearchParams({
     grant_type: "client_credentials",
-    username: DEMO_CLIENT_ID,
-    password: DEMO_CLIENT_SECRET,
+    username: usuario,
+    password: contrasena,
     scope: "rutas:generar auditoria:leer",
   });
   const res = await fetch(`${API_BASE}/token`, { method: "POST", body });
+  if (res.status === 401) throw new Error("Usuario o contraseña incorrectos.");
   if (!res.ok) throw new Error(`POST /token -> ${res.status}`);
   const data = await res.json();
   return data.access_token;
@@ -170,18 +174,39 @@ async function cargarVeredasPublicas() {
   veredasPublicas = new Map(lista.map((v) => [v.id, v]));
 }
 
-async function iniciar() {
-  try {
-    token = await pedirToken();
-    $("clientInfo").textContent = `client_id: ${DEMO_CLIENT_ID} · scope: rutas:generar auditoria:leer`;
-    setConexion(true, "Conectado a la API");
-  } catch (e) {
-    setConexion(false, "No se pudo conectar");
-    $("mapOverlay").classList.add("hidden");
-    mostrarError(`No se pudo obtener el token OAuth 2.0. ¿Está corriendo el servidor? (${e.message})`);
-    return;
-  }
+async function manejarLogin(e) {
+  e.preventDefault();
+  const boton = $("loginBtn");
+  const label = $("loginBtnLabel");
+  const usuario = $("loginUser").value.trim();
+  const contrasena = $("loginPass").value;
 
+  boton.disabled = true;
+  label.innerHTML = `<span class="spin"></span>Iniciando sesión…`;
+  try {
+    token = await pedirToken(usuario, contrasena);
+    $("clientInfo").textContent = `usuario: ${usuario} · scope: rutas:generar auditoria:leer`;
+    $("loginScreen").classList.add("hidden");
+    $("appRoot").classList.remove("hidden");
+    setConexion(true, "Conectado a la API");
+    await iniciarApp();
+  } catch (err) {
+    mostrarError(err.message.includes("incorrectos")
+      ? err.message
+      : `No se pudo iniciar sesión. ¿Está corriendo el servidor? (${err.message})`);
+  } finally {
+    boton.disabled = false;
+    label.textContent = "Iniciar sesión";
+  }
+}
+
+function cerrarSesion() {
+  // El token solo vive en memoria (nunca en localStorage), así que recargar
+  // la página es la forma más simple y segura de volver a la pantalla de login.
+  location.reload();
+}
+
+async function iniciarApp() {
   map = L.map("map", { scrollWheelZoom: false });
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "&copy; OpenStreetMap",
@@ -334,4 +359,6 @@ document.querySelectorAll("#viewToggle button").forEach((b) => {
   });
 });
 
-iniciar();
+$("loginForm").addEventListener("submit", manejarLogin);
+$("logoutBtn").addEventListener("click", cerrarSesion);
+$("loginUser").focus();
