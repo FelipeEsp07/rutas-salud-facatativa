@@ -9,7 +9,7 @@ Impacto Social — LCUP/CCPL, Universidad de Cundinamarca.
 
 > **Datos simulados.** El índice de vulnerabilidad de cada vereda es inventado para
 > esta demostración académica. No representa la situación real de ninguna comunidad.
-> Ver [`ETICA.md`](./ETICA.md) y el endpoint `/etica`.
+> Ver el endpoint `/etica`.
 
 ## Requerimientos cubiertos
 
@@ -128,4 +128,4 @@ código, como correspondería en un despliegue real de microservicios.
 - No hay ventanas de tiempo ni capacidad del equipo de salud.
 - No se integra con historia clínica ni GPS en tiempo real (fuera del alcance del reto).
 
-Ver [`ETICA.md`](./ETICA.md) para el detalle de las consideraciones éticas.
+Ver el endpoint `/etica` para el detalle de las consideraciones éticas.

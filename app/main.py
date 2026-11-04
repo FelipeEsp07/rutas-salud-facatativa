@@ -281,7 +281,7 @@ def consultar_auditoria(
 # ---------------------------------------------------------------------------
 @app.get("/etica", tags=["Ética"])
 def consideraciones_eticas():
-    """Resumen de las consideraciones éticas y limitaciones del modelo (ver ETICA.md para el detalle)."""
+    """Resumen de las consideraciones éticas y limitaciones del modelo."""
     return {
         "principios": [
             "El índice de vulnerabilidad describe a la vereda, no a una persona: usarlo para decidir "
