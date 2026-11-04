@@ -41,11 +41,12 @@ h1,h2,h3,button,label,.disp{font-family:var(--f-display)}
 .login-sub{font-size:13.5px;color:var(--muted);margin:0 0 20px}
 .login-card label{display:block;text-align:left;font-size:12px;font-weight:600;color:var(--ink-2);
   margin:12px 0 5px}
-.login-card input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;
-  background:var(--surface);color:var(--ink);font-family:var(--f-body);font-size:14px}
-.login-card input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.login-card input,.login-card select{width:100%;padding:10px 12px;border:1px solid var(--border);
+  border-radius:9px;background:var(--surface);color:var(--ink);font-family:var(--f-body);font-size:14px}
+.login-card input:focus-visible,.login-card select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .login-card .btn{margin-top:20px}
 .login-hint{font-size:11px;color:var(--muted);line-height:1.5;margin:16px 0 0;text-align:left}
+.login-switch{align-self:center;margin-top:14px}
 
 .link-btn{border:none;background:none;color:var(--muted);font-family:var(--f-display);font-size:12px;
   font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px;padding:4px}

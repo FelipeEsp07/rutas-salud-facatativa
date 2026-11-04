@@ -29,6 +29,34 @@
 
     <button class="btn" type="submit" id="loginBtn"><span id="loginBtnLabel">Iniciar sesión</span></button>
     <p class="login-hint">Credenciales de demostración, ya diligenciadas, para esta sustentación académica. El inicio de sesión usa el flujo OAuth 2.0 real del microservicio (<span class="mono">POST /token</span>).</p>
+    <button class="link-btn login-switch" type="button" id="irACrearCuenta">¿No tienes cuenta? Crear usuario</button>
+  </form>
+
+  <form class="login-card hidden" id="registerForm">
+    <div class="login-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+    </div>
+    <h1>Crear usuario</h1>
+    <p class="login-sub">Registra una cuenta nueva en el microservicio</p>
+
+    <label for="regUser">Usuario</label>
+    <input type="text" id="regUser" placeholder="p. ej. coordinador.facatativa" autocomplete="username" minlength="3" required>
+
+    <label for="regPass">Contraseña</label>
+    <input type="password" id="regPass" placeholder="mínimo 6 caracteres" autocomplete="new-password" minlength="6" required>
+
+    <label for="regPass2">Confirmar contraseña</label>
+    <input type="password" id="regPass2" autocomplete="new-password" minlength="6" required>
+
+    <label for="regRol">Tipo de usuario</label>
+    <select id="regRol">
+      <option value="coordinador" selected>Coordinador EBS — genera rutas</option>
+      <option value="administrador">Administrador — además consulta la auditoría</option>
+    </select>
+
+    <button class="btn" type="submit" id="registerBtn"><span id="registerBtnLabel">Crear usuario</span></button>
+    <p class="login-hint">Llama a <span class="mono">POST /usuarios</span>. La contraseña nunca se guarda en texto plano: se guarda su hash (PBKDF2-HMAC-SHA256 con sal aleatoria).</p>
+    <button class="link-btn login-switch" type="button" id="irAIniciarSesion">¿Ya tienes cuenta? Inicia sesión</button>
   </form>
 </div>
 

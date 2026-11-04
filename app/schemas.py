@@ -94,3 +94,20 @@ class TokenResponse(BaseModel):
     token_type: Literal["bearer"] = "bearer"
     expires_in: int
     scope: str
+
+
+class SolicitudCrearUsuario(BaseModel):
+    username: str = Field(min_length=3, max_length=50, pattern=r"^[a-zA-Z0-9_\.\-]+$",
+                           description="Solo letras, números, guion, guion bajo y punto")
+    password: str = Field(min_length=6, max_length=100)
+    rol: Literal["coordinador", "administrador"] = Field(
+        default="coordinador",
+        description="coordinador: genera rutas y consulta veredas. administrador: además consulta la auditoría.",
+    )
+
+
+class RespuestaUsuario(BaseModel):
+    username: str
+    rol: str
+    scopes: list[str]
+    creado_en: str

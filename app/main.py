@@ -20,14 +20,14 @@ from sqlalchemy.orm import Session
 
 from app import algorithm, data
 from app.database import (
-    calcular_hash_entrada, contar_visitas_recientes, guardar_registro,
-    inicializar_bd, listar_registros, obtener_registro, obtener_sesion,
+    calcular_hash_entrada, contar_visitas_recientes, crear_usuario, guardar_registro,
+    inicializar_bd, listar_registros, obtener_registro, obtener_sesion, obtener_usuario_por_username,
 )
 from app.schemas import (
-    ParadaRuta, RegistroAuditoria, RespuestaRuta, SolicitudRuta, TokenResponse,
-    Vereda, VeredaPublica,
+    ParadaRuta, RegistroAuditoria, RespuestaRuta, RespuestaUsuario, SolicitudCrearUsuario,
+    SolicitudRuta, TokenResponse, Vereda, VeredaPublica,
 )
-from app.security import autenticar_cliente, emitir_token, requiere_scope
+from app.security import SCOPES_POR_ROL, autenticar_cliente, emitir_token, hash_password, requiere_scope
 
 ALGORITMO_VERSION = "heuristica-v1.0"
 
@@ -69,20 +69,53 @@ def obtener_token(
     client_id: str = Form(..., alias="username"),
     client_secret: str = Form(..., alias="password"),
     scope: str = Form(""),
+    sesion: Session = Depends(obtener_sesion),
 ):
     """
     Flujo OAuth 2.0 **client_credentials**: `username`/`password` llevan el
-    `client_id`/`client_secret` del sistema del EBS (no es un login de persona;
-    no se maneja ningún dato personal en este paso).
+    `client_id`/`client_secret` del sistema del EBS, o el usuario y la contraseña
+    de una cuenta creada con `POST /usuarios`.
     """
     if grant_type != "client_credentials":
         raise HTTPException(status_code=400, detail="grant_type debe ser 'client_credentials'")
 
-    scopes_otorgados = autenticar_cliente(client_id, client_secret)
+    scopes_otorgados = autenticar_cliente(sesion, client_id, client_secret)
     scopes_solicitados = set(scope.split()) if scope else scopes_otorgados
     scopes_finales = scopes_otorgados & scopes_solicitados if scopes_solicitados else scopes_otorgados
     token, expira_en = emitir_token(client_id, scopes_finales)
     return TokenResponse(access_token=token, expires_in=expira_en, scope=" ".join(sorted(scopes_finales)))
+
+
+# ---------------------------------------------------------------------------
+# Usuarios (RF-09, RF-10)
+# ---------------------------------------------------------------------------
+@app.post("/usuarios", response_model=RespuestaUsuario, status_code=201, tags=["Usuarios"])
+def registrar_usuario(solicitud: SolicitudCrearUsuario, sesion: Session = Depends(obtener_sesion)):
+    """
+    Crea una cuenta nueva. No requiere autenticación: es el registro inicial.
+
+    El rol determina los permisos (RF-10):
+    - **coordinador**: genera rutas y consulta veredas.
+    - **administrador**: además consulta el registro de auditoría.
+
+    La contraseña nunca se guarda en texto plano: se guarda su hash (PBKDF2-HMAC-SHA256
+    con sal aleatoria), y esta respuesta nunca la incluye.
+    """
+    if obtener_usuario_por_username(sesion, solicitud.username):
+        raise HTTPException(status_code=409, detail="Ya existe una cuenta con ese usuario.")
+
+    usuario = crear_usuario(
+        sesion,
+        username=solicitud.username,
+        password_hash=hash_password(solicitud.password),
+        rol=solicitud.rol,
+    )
+    return RespuestaUsuario(
+        username=usuario.username,
+        rol=usuario.rol,
+        scopes=sorted(SCOPES_POR_ROL.get(usuario.rol, set())),
+        creado_en=usuario.creado_en.isoformat(),
+    )
 
 
 # ---------------------------------------------------------------------------

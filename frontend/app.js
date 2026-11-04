@@ -19,6 +19,7 @@ const $ = (id) => document.getElementById(id);
 const fmt = (n, d = 1) => Number(n).toLocaleString("es-CO", { minimumFractionDigits: d, maximumFractionDigits: d });
 
 let token = null;
+let scopesActuales = new Set();
 let map, geoLayer, routeLayer, markersLayer, hospitalMarker;
 let veredasPorId = new Map();     // vista coordinación (con vulnerabilidad)
 let veredasPublicas = new Map();  // vista pública (sin vulnerabilidad)
@@ -63,8 +64,7 @@ async function pedirToken(usuario, contrasena) {
   const res = await fetch(`${API_BASE}/token`, { method: "POST", body });
   if (res.status === 401) throw new Error("Usuario o contraseña incorrectos.");
   if (!res.ok) throw new Error(`POST /token -> ${res.status}`);
-  const data = await res.json();
-  return data.access_token;
+  return res.json(); // { access_token, scope, expires_in, token_type }
 }
 
 async function api(path, { auth = true, method = "GET", body = null } = {}) {
@@ -178,18 +178,10 @@ async function manejarLogin(e) {
   e.preventDefault();
   const boton = $("loginBtn");
   const label = $("loginBtnLabel");
-  const usuario = $("loginUser").value.trim();
-  const contrasena = $("loginPass").value;
-
   boton.disabled = true;
   label.innerHTML = `<span class="spin"></span>Iniciando sesión…`;
   try {
-    token = await pedirToken(usuario, contrasena);
-    $("clientInfo").textContent = `usuario: ${usuario} · scope: rutas:generar auditoria:leer`;
-    $("loginScreen").classList.add("hidden");
-    $("appRoot").classList.remove("hidden");
-    setConexion(true, "Conectado a la API");
-    await iniciarApp();
+    await iniciarSesionConCredenciales($("loginUser").value.trim(), $("loginPass").value);
   } catch (err) {
     mostrarError(err.message.includes("incorrectos")
       ? err.message
@@ -198,6 +190,69 @@ async function manejarLogin(e) {
     boton.disabled = false;
     label.textContent = "Iniciar sesión";
   }
+}
+
+async function iniciarSesionConCredenciales(usuario, contrasena) {
+  const datosToken = await pedirToken(usuario, contrasena);
+  token = datosToken.access_token;
+  scopesActuales = new Set((datosToken.scope || "").split(" ").filter(Boolean));
+  $("clientInfo").textContent = `usuario: ${usuario} · scope: ${datosToken.scope || "(ninguno)"}`;
+  $("loginScreen").classList.add("hidden");
+  $("appRoot").classList.remove("hidden");
+  setConexion(true, "Conectado a la API");
+  await iniciarApp();
+}
+
+async function manejarRegistro(e) {
+  e.preventDefault();
+  const boton = $("registerBtn");
+  const label = $("registerBtnLabel");
+  const usuario = $("regUser").value.trim();
+  const contrasena = $("regPass").value;
+  const confirmacion = $("regPass2").value;
+  const rol = $("regRol").value;
+
+  if (contrasena !== confirmacion) {
+    mostrarError("Las contraseñas no coinciden.");
+    return;
+  }
+
+  boton.disabled = true;
+  label.innerHTML = `<span class="spin"></span>Creando usuario…`;
+  try {
+    const res = await fetch(`${API_BASE}/usuarios`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: usuario, password: contrasena, rol }),
+    });
+    if (res.status === 409) throw new Error("Ya existe una cuenta con ese usuario.");
+    if (!res.ok) {
+      const detalle = await res.json().catch(() => null);
+      const mensaje = detalle?.detail
+        ? (Array.isArray(detalle.detail) ? detalle.detail.map((d) => d.msg).join(" · ") : detalle.detail)
+        : `POST /usuarios -> ${res.status}`;
+      throw new Error(mensaje);
+    }
+    // Cuenta creada: inicia sesión con las mismas credenciales, sin pedirlas de nuevo.
+    await iniciarSesionConCredenciales(usuario, contrasena);
+  } catch (err) {
+    mostrarError(`No se pudo crear el usuario: ${err.message}`);
+  } finally {
+    boton.disabled = false;
+    label.textContent = "Crear usuario";
+  }
+}
+
+function mostrarFormularioLogin() {
+  $("registerForm").classList.add("hidden");
+  $("loginForm").classList.remove("hidden");
+  $("loginUser").focus();
+}
+
+function mostrarFormularioRegistro() {
+  $("loginForm").classList.add("hidden");
+  $("registerForm").classList.remove("hidden");
+  $("regUser").focus();
 }
 
 function cerrarSesion() {
@@ -293,9 +348,18 @@ async function generarRuta() {
 }
 
 async function refrescarAuditoria() {
+  const tbody = $("auditBody");
+  if (!scopesActuales.has("auditoria:leer")) {
+    // No se llama a /auditoria: un coordinador EBS no tiene ese permiso (solo
+    // el rol administrador). Mostrarlo así, en vez de como un error, es más
+    // honesto que disparar un 403 cada vez que inicia sesión.
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Tu cuenta no tiene permiso para consultar la auditoría (solo administradores)</div></td></tr>`;
+    return;
+  }
   try {
     const registros = await api("/auditoria?limite=10");
-    const tbody = $("auditBody");
     if (!registros.length) {
       tbody.innerHTML = `<tr><td colspan="5"><div class="empty">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"/></svg>
@@ -360,5 +424,8 @@ document.querySelectorAll("#viewToggle button").forEach((b) => {
 });
 
 $("loginForm").addEventListener("submit", manejarLogin);
+$("registerForm").addEventListener("submit", manejarRegistro);
+$("irACrearCuenta").addEventListener("click", mostrarFormularioRegistro);
+$("irAIniciarSesion").addEventListener("click", mostrarFormularioLogin);
 $("logoutBtn").addEventListener("click", cerrarSesion);
 $("loginUser").focus();

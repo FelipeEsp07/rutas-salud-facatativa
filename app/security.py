@@ -1,11 +1,15 @@
 """OAuth 2.0, flujo client_credentials con tokens JWT de corta duración (RNF-01)."""
+import hashlib
+import secrets
 from datetime import datetime, timedelta, timezone
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
+from sqlalchemy.orm import Session
 
 from app.config import get_settings
+from app.database import obtener_usuario_por_username
 
 # tokenUrl documenta en Swagger dónde se obtiene el token; no implica un login de usuario final.
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", scopes={
@@ -13,17 +17,51 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", scopes={
     "auditoria:leer": "Consultar el registro de auditoría",
 })
 
+# RF-09/RF-10: permisos según el rol elegido al crear la cuenta (POST /usuarios).
+SCOPES_POR_ROL: dict[str, set[str]] = {
+    "coordinador": {"rutas:generar"},
+    "administrador": {"rutas:generar", "auditoria:leer"},
+}
+_ITERACIONES_HASH = 200_000
 
-def autenticar_cliente(client_id: str, client_secret: str) -> set[str]:
-    """Valida client_id/client_secret contra los clientes configurados. Devuelve los scopes otorgados."""
+
+def hash_password(password: str) -> str:
+    """PBKDF2-HMAC-SHA256 con sal aleatoria. Sin dependencias nuevas (solo librería estándar)."""
+    sal = secrets.token_hex(16)
+    derivado = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), sal.encode("utf-8"), _ITERACIONES_HASH)
+    return f"{sal}${derivado.hex()}"
+
+
+def verificar_password(password: str, hash_guardado: str) -> bool:
+    try:
+        sal, esperado = hash_guardado.split("$", 1)
+    except ValueError:
+        return False
+    derivado = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), sal.encode("utf-8"), _ITERACIONES_HASH)
+    return secrets.compare_digest(derivado.hex(), esperado)
+
+
+def autenticar_cliente(sesion: Session, client_id: str, client_secret: str) -> set[str]:
+    """
+    Valida client_id/client_secret contra dos fuentes, en este orden:
+    1. Los clientes de sistema configurados en OAUTH_CLIENTS (.env) — pensados para
+       integraciones servicio-a-servicio, como el cliente de demostración.
+    2. Las cuentas creadas con POST /usuarios, guardadas en la base de datos.
+    Devuelve los scopes otorgados, o rechaza con 401 si no coincide con ninguna.
+    """
     settings = get_settings()
     cliente = settings.clients.get(client_id)
-    if not cliente or cliente["secret"] != client_secret:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="client_id o client_secret inválidos",
-        )
-    return cliente["scopes"]
+    if cliente and cliente["secret"] == client_secret:
+        return cliente["scopes"]
+
+    usuario = obtener_usuario_por_username(sesion, client_id)
+    if usuario and verificar_password(client_secret, usuario.password_hash):
+        return SCOPES_POR_ROL.get(usuario.rol, set())
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Usuario o contraseña inválidos",
+    )
 
 
 def emitir_token(client_id: str, scopes: set[str]) -> tuple[str, int]:

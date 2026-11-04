@@ -29,6 +29,17 @@ class RegistroRuta(Base):
     hash_entrada = Column(String, nullable=False)
 
 
+class Usuario(Base):
+    """Cuentas creadas desde POST /usuarios (RF-09, RF-10). Guarda solo el hash de la contraseña."""
+    __tablename__ = "usuarios"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String, unique=True, index=True, nullable=False)
+    password_hash = Column(String, nullable=False)
+    rol = Column(String, nullable=False)  # "coordinador" | "administrador"
+    creado_en = Column(DateTime, nullable=False)
+
+
 _settings = get_settings()
 _engine = create_engine(_settings.database_url, connect_args={"check_same_thread": False} if "sqlite" in _settings.database_url else {})
 SessionLocal = sessionmaker(bind=_engine, autoflush=False, autocommit=False)
@@ -83,6 +94,23 @@ def listar_registros(sesion: Session, limite: int = 50) -> list[RegistroRuta]:
 
 def obtener_registro(sesion: Session, id_ruta: str) -> RegistroRuta | None:
     return sesion.query(RegistroRuta).filter(RegistroRuta.id_ruta == id_ruta).first()
+
+
+def crear_usuario(sesion: Session, *, username: str, password_hash: str, rol: str) -> Usuario:
+    usuario = Usuario(
+        username=username,
+        password_hash=password_hash,
+        rol=rol,
+        creado_en=datetime.now(timezone.utc),
+    )
+    sesion.add(usuario)
+    sesion.commit()
+    sesion.refresh(usuario)
+    return usuario
+
+
+def obtener_usuario_por_username(sesion: Session, username: str) -> Usuario | None:
+    return sesion.query(Usuario).filter(Usuario.username == username).first()
 
 
 def contar_visitas_recientes(sesion: Session, n_jornadas: int = 2) -> dict[int, int]:

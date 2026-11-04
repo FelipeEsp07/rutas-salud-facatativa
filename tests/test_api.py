@@ -5,6 +5,20 @@ import tempfile
 import pytest
 from fastapi.testclient import TestClient
 
+from app.security import hash_password, verificar_password
+
+
+def test_hash_password_nunca_guarda_la_clave_en_texto_plano():
+    hashed = hash_password("miClaveSecreta")
+    assert "miClaveSecreta" not in hashed
+    assert "$" in hashed  # formato sal$derivado
+
+
+def test_verificar_password_acepta_la_correcta_y_rechaza_otras():
+    hashed = hash_password("correcta123")
+    assert verificar_password("correcta123", hashed) is True
+    assert verificar_password("incorrecta", hashed) is False
+
 
 @pytest.fixture()
 def client(monkeypatch):
@@ -155,3 +169,60 @@ def test_generar_ruta_usa_los_mismos_pesos_que_veredas(client):
     assert resp.status_code == 200, resp.text
     for parada in resp.json()["orden_visita"]:
         assert parada["vulnerabilidad"] == vulnerabilidad_por_id[parada["vereda_id"]]
+
+
+# ---------------------------------------------------------------------------
+# Creación de usuarios (RF-09, RF-10)
+# ---------------------------------------------------------------------------
+def test_crear_usuario_coordinador(client):
+    resp = client.post("/usuarios", json={"username": "maria.ebs", "password": "clave123", "rol": "coordinador"})
+    assert resp.status_code == 201, resp.text
+    body = resp.json()
+    assert body["username"] == "maria.ebs"
+    assert body["scopes"] == ["rutas:generar"]
+    assert "password" not in body and "password_hash" not in body
+
+
+def test_crear_usuario_administrador_tiene_los_dos_scopes(client):
+    resp = client.post("/usuarios", json={"username": "admin.salud", "password": "clave123", "rol": "administrador"})
+    assert resp.status_code == 201, resp.text
+    assert set(resp.json()["scopes"]) == {"rutas:generar", "auditoria:leer"}
+
+
+def test_crear_usuario_duplicado_es_rechazado(client):
+    client.post("/usuarios", json={"username": "duplicado", "password": "clave123"})
+    resp = client.post("/usuarios", json={"username": "duplicado", "password": "otraclave"})
+    assert resp.status_code == 409
+
+
+def test_crear_usuario_valida_longitud_minima(client):
+    resp = client.post("/usuarios", json={"username": "ab", "password": "clave123"})
+    assert resp.status_code == 422
+    resp = client.post("/usuarios", json={"username": "usuariovalido", "password": "123"})
+    assert resp.status_code == 422
+
+
+def test_usuario_recien_creado_puede_iniciar_sesion_y_usar_su_scope(client):
+    client.post("/usuarios", json={"username": "coordinador.nuevo", "password": "claveSegura1", "rol": "coordinador"})
+    resp = client.post("/token", data={
+        "grant_type": "client_credentials", "username": "coordinador.nuevo", "password": "claveSegura1",
+    })
+    assert resp.status_code == 200, resp.text
+    token = resp.json()["access_token"]
+    assert resp.json()["scope"] == "rutas:generar"
+
+    # Puede generar rutas...
+    resp_ruta = client.post("/rutas", json={"n_visitas": 2}, headers={"Authorization": f"Bearer {token}"})
+    assert resp_ruta.status_code == 200
+
+    # ...pero no puede leer la auditoría (ese scope es solo de administrador).
+    resp_audit = client.get("/auditoria", headers={"Authorization": f"Bearer {token}"})
+    assert resp_audit.status_code == 403
+
+
+def test_login_con_contrasena_incorrecta_es_rechazado(client):
+    client.post("/usuarios", json={"username": "alguien", "password": "claveCorrecta1"})
+    resp = client.post("/token", data={
+        "grant_type": "client_credentials", "username": "alguien", "password": "claveIncorrecta",
+    })
+    assert resp.status_code == 401
