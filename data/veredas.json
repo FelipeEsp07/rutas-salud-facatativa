@@ -1,0 +1,220 @@
+{
+  "sede_salud": {
+    "nombre": "E.S.E. Hospital San Rafael de Facatativá",
+    "direccion": "Carrera 2 No. 1-80, Facatativá",
+    "lat": 4.8068265,
+    "lon": -74.3496229
+  },
+  "veredas": [
+    {
+      "id": 1,
+      "codigo_dane": "25269002",
+      "nombre": "Cuatro Esquinas de Bermeo",
+      "municipio": "Facatativá",
+      "lat": 4.85483,
+      "lon": -74.30552,
+      "vulnerabilidad": 0.311,
+      "indicadores_simulados": {
+        "poblacion_adulta_mayor_pct": 18,
+        "gestantes_menores5_por100hogares": 6,
+        "via_sin_pavimentar_pct": 55,
+        "dias_sin_visita_ebs": 40
+      }
+    },
+    {
+      "id": 2,
+      "codigo_dane": "25269012",
+      "nombre": "San Rafael",
+      "municipio": "Facatativá",
+      "lat": 4.85087,
+      "lon": -74.36264,
+      "vulnerabilidad": 0.3429,
+      "indicadores_simulados": {
+        "poblacion_adulta_mayor_pct": 22,
+        "gestantes_menores5_por100hogares": 9,
+        "via_sin_pavimentar_pct": 35,
+        "dias_sin_visita_ebs": 25
+      }
+    },
+    {
+      "id": 3,
+      "codigo_dane": "25269013",
+      "nombre": "Tierra Grata",
+      "municipio": "Facatativá",
+      "lat": 4.8484,
+      "lon": -74.27374,
+      "vulnerabilidad": 0.4054,
+      "indicadores_simulados": {
+        "poblacion_adulta_mayor_pct": 15,
+        "gestantes_menores5_por100hogares": 5,
+        "via_sin_pavimentar_pct": 70,
+        "dias_sin_visita_ebs": 75
+      }
+    },
+    {
+      "id": 4,
+      "codigo_dane": "25269007",
+      "nombre": "Mancilla",
+      "municipio": "Facatativá",
+      "lat": 4.8573,
+      "lon": -74.33857,
+      "vulnerabilidad": 0.428,
+      "indicadores_simulados": {
+        "poblacion_adulta_mayor_pct": 20,
+        "gestantes_menores5_por100hogares": 11,
+        "via_sin_pavimentar_pct": 45,
+        "dias_sin_visita_ebs": 30
+      }
+    },
+    {
+      "id": 5,
+      "codigo_dane": "25269001",
+      "nombre": "Corito",
+      "municipio": "Facatativá",
+      "lat": 4.79125,
+      "lon": -74.37058,
+      "vulnerabilidad": 0.756,
+      "indicadores_simulados": {
+        "poblacion_adulta_mayor_pct": 26,
+        "gestantes_menores5_por100hogares": 7,
+        "via_sin_pavimentar_pct": 80,
+        "dias_sin_visita_ebs": 90
+      }
+    },
+    {
+      "id": 6,
+      "codigo_dane": "25269014",
+      "nombre": "Tierra Morada",
+      "municipio": "Facatativá",
+      "lat": 4.85851,
+      "lon": -74.28553,
+      "vulnerabilidad": 0.4521,
+      "indicadores_simulados": {
+        "poblacion_adulta_mayor_pct": 14,
+        "gestantes_menores5_por100hogares": 8,
+        "via_sin_pavimentar_pct": 75,
+        "dias_sin_visita_ebs": 60
+      }
+    },
+    {
+      "id": 7,
+      "codigo_dane": "25269009",
+      "nombre": "Paso Ancho",
+      "municipio": "Facatativá",
+      "lat": 4.82163,
+      "lon": -74.2758,
+      "vulnerabilidad": 0.5515,
+      "indicadores_simulados": {
+        "poblacion_adulta_mayor_pct": 17,
+        "gestantes_menores5_por100hogares": 12,
+        "via_sin_pavimentar_pct": 60,
+        "dias_sin_visita_ebs": 55
+      }
+    },
+    {
+      "id": 8,
+      "codigo_dane": "25269006",
+      "nombre": "Los Manzanos",
+      "municipio": "Facatativá",
+      "lat": 4.82325,
+      "lon": -74.38648,
+      "vulnerabilidad": 0.3307,
+      "indicadores_simulados": {
+        "poblacion_adulta_mayor_pct": 24,
+        "gestantes_menores5_por100hogares": 6,
+        "via_sin_pavimentar_pct": 50,
+        "dias_sin_visita_ebs": 20
+      }
+    },
+    {
+      "id": 9,
+      "codigo_dane": "25269003",
+      "nombre": "El Corzo",
+      "municipio": "Facatativá",
+      "lat": 4.78319,
+      "lon": -74.34477,
+      "vulnerabilidad": 0.3747,
+      "indicadores_simulados": {
+        "poblacion_adulta_mayor_pct": 19,
+        "gestantes_menores5_por100hogares": 10,
+        "via_sin_pavimentar_pct": 40,
+        "dias_sin_visita_ebs": 35
+      }
+    },
+    {
+      "id": 10,
+      "codigo_dane": "25269011",
+      "nombre": "Pueblo Viejo",
+      "municipio": "Facatativá",
+      "lat": 4.80468,
+      "lon": -74.37604,
+      "vulnerabilidad": 0.1458,
+      "indicadores_simulados": {
+        "poblacion_adulta_mayor_pct": 21,
+        "gestantes_menores5_por100hogares": 5,
+        "via_sin_pavimentar_pct": 30,
+        "dias_sin_visita_ebs": 15
+      }
+    },
+    {
+      "id": 11,
+      "codigo_dane": "25269005",
+      "nombre": "La Tribuna",
+      "municipio": "Facatativá",
+      "lat": 4.86041,
+      "lon": -74.40405,
+      "vulnerabilidad": 0.8417,
+      "indicadores_simulados": {
+        "poblacion_adulta_mayor_pct": 28,
+        "gestantes_menores5_por100hogares": 9,
+        "via_sin_pavimentar_pct": 85,
+        "dias_sin_visita_ebs": 80
+      }
+    },
+    {
+      "id": 12,
+      "codigo_dane": "25269004",
+      "nombre": "La Selva",
+      "municipio": "Facatativá",
+      "lat": 4.86124,
+      "lon": -74.37446,
+      "vulnerabilidad": 0.5065,
+      "indicadores_simulados": {
+        "poblacion_adulta_mayor_pct": 23,
+        "gestantes_menores5_por100hogares": 7,
+        "via_sin_pavimentar_pct": 65,
+        "dias_sin_visita_ebs": 50
+      }
+    },
+    {
+      "id": 13,
+      "codigo_dane": "25269008",
+      "nombre": "Moyano",
+      "municipio": "Facatativá",
+      "lat": 4.8066,
+      "lon": -74.30445,
+      "vulnerabilidad": 0.5107,
+      "indicadores_simulados": {
+        "poblacion_adulta_mayor_pct": 16,
+        "gestantes_menores5_por100hogares": 13,
+        "via_sin_pavimentar_pct": 55,
+        "dias_sin_visita_ebs": 45
+      }
+    },
+    {
+      "id": 14,
+      "codigo_dane": "25269010",
+      "nombre": "Prado",
+      "municipio": "Facatativá",
+      "lat": 4.82259,
+      "lon": -74.32466,
+      "vulnerabilidad": 0.1818,
+      "indicadores_simulados": {
+        "poblacion_adulta_mayor_pct": 18,
+        "gestantes_menores5_por100hogares": 8,
+        "via_sin_pavimentar_pct": 25,
+        "dias_sin_visita_ebs": 20
+      }
+    }
+  ]
+}

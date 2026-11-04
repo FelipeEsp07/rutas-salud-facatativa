@@ -1,0 +1,20 @@
+# Blueprint de Render (https://render.com/docs/blueprint-spec).
+# Despliegue de un clic: en el Dashboard de Render, "New" -> "Blueprint" ->
+# conectar este repositorio. Render lee este archivo y crea el servicio solo.
+services:
+  - type: web
+    name: rutas-salud-facatativa
+    runtime: docker
+    plan: free
+    healthCheckPath: /
+    envVars:
+      # Se genera un valor aleatorio distinto al del repositorio; nunca queda expuesto.
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: JWT_EXPIRE_MINUTES
+        value: "30"
+      # Mismo cliente de demostración que ya usa el frontend (frontend/app.js).
+      - key: OAUTH_CLIENTS
+        value: ebs-facatativa-01:secreto-demo-123:rutas:generar,auditoria:leer
+      - key: DATABASE_URL
+        value: sqlite:///./auditoria.db

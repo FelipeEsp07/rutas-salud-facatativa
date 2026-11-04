@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rutas de Atención Rural — Facatativá</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%23245A63'/%3E%3Cpath d='M12 6a4 4 0 0 0-4 4c0 3 4 8 4 8s4-5 4-8a4 4 0 0 0-4-4Z' fill='none' stroke='%23fff' stroke-width='1.6'/%3E%3Ccircle cx='12' cy='10' r='1.4' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Literata:wght@400;500&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="toasts" id="toasts"></div>
+
+<div class="app">
+  <header class="hero">
+    <h1>Rutas de atención rural, Facatativá</h1>
+    <div class="hero-grid">
+      <div class="hero-block">
+        <h3>La problemática</h3>
+        <p>Las comunidades de las 14 veredas de Facatativá enfrentan largos desplazamientos y vías en mal estado para llegar a un centro de salud. Eso retrasa la atención justo donde más se necesita.</p>
+      </div>
+      <div class="hero-block">
+        <h3>La solución</h3>
+        <p>Esta herramienta calcula, para cada jornada del Equipo Básico de Salud, qué veredas atender primero y en qué orden visitarlas, combinando el nivel de vulnerabilidad de cada una con la distancia real desde la sede de salud.</p>
+      </div>
+    </div>
+    <div class="hero-facts">
+      <div class="fact"><span class="fact-n">14</span><span class="fact-l">Veredas rurales</span></div>
+      <div class="fact"><span class="fact-n">1</span><span class="fact-l">Sede de salud</span></div>
+      <div class="fact"><span class="fact-n">5</span><span class="fact-l">Veredas por jornada (ajustable)</span></div>
+    </div>
+  </header>
+
+  <section class="screen screen-tool">
+    <div class="screen-head">
+      <div>
+        <span class="screen-eyebrow">Herramienta interactiva</span>
+        <h2>Genera la ruta de la jornada</h2>
+      </div>
+      <div class="conn" id="conn"><span class="dot loading" id="connDot"></span><span id="connTxt">Conectando con la API…</span></div>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <section class="panel">
+          <h2><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h6"/></svg>Parámetros de la jornada</h2>
+          <div class="row">
+            <div class="row-top"><label for="alfa">Peso de la vulnerabilidad (α)</label><span class="mono" id="alfaV">0.60</span></div>
+            <input type="range" id="alfa" min="0" max="1" step="0.05" value="0.6">
+          </div>
+          <div class="row">
+            <div class="row-top"><label for="nvis">Veredas por jornada</label><span class="mono" id="nvisV">5</span></div>
+            <input type="range" id="nvis" min="1" max="8" step="1" value="5">
+          </div>
+          <div class="row">
+            <div class="row-top"><label for="sin">Factor de sinuosidad</label><span class="mono" id="sinV">1.40</span></div>
+            <input type="range" id="sin" min="1" max="2" step="0.1" value="1.4">
+          </div>
+          <label class="check" for="equidad">
+            <input type="checkbox" id="equidad" checked>
+            <span>Factor de equidad<small>Penaliza veredas visitadas en las 2 jornadas más recientes (según la auditoría real).</small></span>
+          </label>
+          <button class="btn" id="genBtn" disabled>
+            <span id="genBtnLabel">Generar ruta · POST /rutas</span>
+          </button>
+          <p class="hint">Cada clic llama a la API real y queda guardado en el registro de auditoría.</p>
+        </section>
+
+        <section class="panel">
+          <h2><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M7 16l3-6 4 3 5-8"/></svg>Composición del índice</h2>
+          <div class="row">
+            <div class="row-top"><label for="wMayor">Población adulta mayor</label><span class="mono" id="wMayorV">25</span></div>
+            <input type="range" id="wMayor" min="0" max="100" step="5" value="25">
+          </div>
+          <div class="row">
+            <div class="row-top"><label for="wGestantes">Gestantes y menores de 5</label><span class="mono" id="wGestantesV">25</span></div>
+            <input type="range" id="wGestantes" min="0" max="100" step="5" value="25">
+          </div>
+          <div class="row">
+            <div class="row-top"><label for="wVia">Vía sin pavimentar</label><span class="mono" id="wViaV">25</span></div>
+            <input type="range" id="wVia" min="0" max="100" step="5" value="25">
+          </div>
+          <div class="row">
+            <div class="row-top"><label for="wDias">Días sin visita del EBS</label><span class="mono" id="wDiasV">25</span></div>
+            <input type="range" id="wDias" min="0" max="100" step="5" value="25">
+          </div>
+          <p class="hint">Los 4 controles se reparten entre sí (no hace falta que sumen 100). El mapa y la ruta usan siempre el mismo cálculo: <span class="mono">GET /veredas</span> y <span class="mono">POST /rutas</span> reciben estos mismos pesos.</p>
+        </section>
+
+        <section class="panel">
+          <h2><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>Vista</h2>
+          <div class="seg" id="viewToggle">
+            <button type="button" data-v="coord" class="active">Coordinación</button>
+            <button type="button" data-v="pub">Pública</button>
+          </div>
+          <p class="hint" style="margin:0">La vista pública llama a <span class="mono">/veredas/publico</span> (sin token) y oculta el índice de vulnerabilidad, para no exponer un puntaje por comunidad.</p>
+        </section>
+      </aside>
+
+      <main class="content">
+        <section class="card">
+          <div class="card-head">
+            <h2 id="mapTitle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20 3 17V4l6 3 6-3 6 3v13l-6-3-6 3Z"/><path d="M9 7v13M15 4v13"/></svg>Mapa de veredas</h2>
+            <div class="legend">
+              <div class="legend-scale">
+                <span>Índice de prioridad</span>
+                <div class="ramp"></div>
+                <div class="ramp-ticks"><span>Baja</span><span>Alta</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="map-shell">
+            <div id="map"></div>
+            <div class="map-overlay" id="mapOverlay"><div class="spin-lg"></div><span>Cargando veredas…</span></div>
+          </div>
+          <div class="kpis">
+            <div class="kpi"><div class="lbl"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>Distancia total</div><div class="val" id="kKm">—</div></div>
+            <div class="kpi"><div class="lbl"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/></svg>Óptimo (fuerza bruta)</div><div class="val" id="kOpt">—</div></div>
+            <div class="kpi"><div class="lbl"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M7 14l4-4 3 3 5-6"/></svg>Brecha vs. óptimo</div><div class="val" id="kGap">—</div></div>
+            <div class="kpi"><div class="lbl"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12Z"/></svg>Vulnerabilidad cubierta</div><div class="val" id="kCov">—</div></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><h2><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg>Orden de visita</h2><span class="legend mono" id="itinMeta"></span></div>
+          <ol class="itin" id="itin">
+            <li class="empty" style="display:block">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20 3 17V4l6 3 6-3 6 3v13l-6-3-6 3Z"/></svg>
+              Genera una ruta para ver el itinerario
+            </li>
+          </ol>
+        </section>
+      </main>
+    </div>
+  </section>
+
+  <section class="screen screen-result">
+    <div class="screen-head">
+      <div>
+        <span class="screen-eyebrow">Trazabilidad</span>
+        <h2>Registro de rutas generadas</h2>
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <section class="panel">
+          <h2><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Cliente OAuth 2.0 activo</h2>
+          <p class="kv">
+            <span class="mono" id="clientInfo">—</span><br><br>
+            Credenciales de demostración, visibles solo para esta sustentación académica.
+            En producción, el frontend nunca debería guardar un <span class="mono">client_secret</span>.
+          </p>
+        </section>
+      </aside>
+
+      <main class="content">
+        <section class="card">
+          <div class="card-head"><h2><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"/><path d="M9 15H3m18-9-9 9-4-4"/></svg>Registro de auditoría</h2><span class="legend">GET /auditoria</span></div>
+          <div class="audit-wrap">
+            <table>
+              <thead><tr><th>id_ruta</th><th>Fecha</th><th>Cliente</th><th>Parámetros</th><th>km</th></tr></thead>
+              <tbody id="auditBody">
+                <tr><td colspan="5">
+                  <div class="empty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"/></svg>
+                    Sin registros todavía
+                  </div>
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+  </section>
+
+  <footer>
+    Frontend estático servido por el mismo FastAPI (<span class="mono">/app</span>), consumiendo la API real en <span class="mono">/token</span>, <span class="mono">/veredas</span>, <span class="mono">/rutas</span> y <span class="mono">/auditoria</span>.
+    Mapa con Leaflet y teselas de OpenStreetMap · límites veredales reales de la Gobernación de Cundinamarca.
+  </footer>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
