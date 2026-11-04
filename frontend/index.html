@@ -229,6 +229,40 @@
     </div>
   </section>
 
+  <section class="screen screen-dashboard">
+    <div class="screen-head">
+      <div>
+        <span class="screen-eyebrow">Panorama</span>
+        <h2>Dashboard de vulnerabilidad y cobertura</h2>
+      </div>
+    </div>
+
+    <div class="dash-kpis" id="dashKpis">
+      <div class="dash-kpi"><div class="lbl">Veredas registradas</div><div class="val" id="dkTotal">—</div></div>
+      <div class="dash-kpi"><div class="lbl">Índice promedio</div><div class="val" id="dkPromedio">—</div></div>
+      <div class="dash-kpi"><div class="lbl">Vereda más prioritaria</div><div class="val" id="dkTop">—</div></div>
+      <div class="dash-kpi"><div class="lbl">Rutas generadas</div><div class="val" id="dkRutas">—</div></div>
+    </div>
+
+    <div class="two">
+      <section class="card">
+        <div class="card-head">
+          <h2><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M7 16l3-6 4 3 5-8"/></svg>Índice de vulnerabilidad por vereda</h2>
+          <span class="legend">según los pesos actuales</span>
+        </div>
+        <div class="bars" id="chartVulnerabilidad"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20 3 17V4l6 3 6-3 6 3v13l-6-3-6 3Z"/><path d="M9 7v13M15 4v13"/></svg>Cobertura histórica (veces visitada)</h2>
+          <span class="legend">GET /auditoria</span>
+        </div>
+        <div class="bars" id="chartCobertura"></div>
+      </section>
+    </div>
+  </section>
+
   <footer>
     Frontend estático servido por el mismo FastAPI (<span class="mono">/app</span>), consumiendo la API real en <span class="mono">/token</span>, <span class="mono">/veredas</span>, <span class="mono">/rutas</span> y <span class="mono">/auditoria</span>.
     Mapa con Leaflet y teselas de OpenStreetMap · límites veredales reales de la Gobernación de Cundinamarca.

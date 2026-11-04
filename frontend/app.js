@@ -295,6 +295,73 @@ async function iniciarApp() {
 
   $("genBtn").disabled = false;
   await refrescarAuditoria();
+  await actualizarDashboard();
+}
+
+// ---------- dashboard ----------
+function renderBarras(contenedorId, items, colorFn) {
+  const cont = $(contenedorId);
+  cont.innerHTML = "";
+  if (!items.length) return;
+  const max = Math.max(...items.map((it) => it.valor), 1);
+  items.forEach((it) => {
+    const ancho = Math.max(2, Math.round((it.valor / max) * 100));
+    const row = document.createElement("div");
+    row.className = "bar-row" + (it.valor === 0 ? " cero" : "");
+    row.innerHTML = `
+      <span class="nm" title="${it.nombre}">${it.nombre}</span>
+      <div class="track"><div class="fill" style="width:${ancho}%;background:${colorFn(it)}"></div></div>
+      <span class="val">${it.etiqueta}</span>`;
+    cont.appendChild(row);
+  });
+}
+
+function actualizarDashboardVulnerabilidad() {
+  const veredas = [...veredasPorId.values()];
+  if (!veredas.length) return;
+
+  const ordenadas = [...veredas].sort((a, b) => b.vulnerabilidad - a.vulnerabilidad);
+  renderBarras(
+    "chartVulnerabilidad",
+    ordenadas.map((v) => ({ nombre: v.nombre, valor: v.vulnerabilidad * 100, etiqueta: fmt(v.vulnerabilidad * 100, 0) })),
+    (it) => colorVulnerabilidad(it.valor / 100),
+  );
+
+  $("dkTotal").textContent = veredas.length;
+  const promedio = veredas.reduce((s, v) => s + v.vulnerabilidad, 0) / veredas.length;
+  $("dkPromedio").textContent = fmt(promedio * 100, 0) + " / 100";
+  $("dkTop").textContent = ordenadas[0]?.nombre ?? "—";
+}
+
+async function actualizarDashboardCobertura() {
+  const permiso = scopesActuales.has("auditoria:leer");
+  if (!permiso) {
+    $("dkRutas").textContent = "—";
+    $("chartCobertura").innerHTML = `<div class="empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Disponible solo para cuentas de administrador</div>`;
+    return;
+  }
+  try {
+    const registros = await api("/auditoria?limite=200");
+    $("dkRutas").textContent = registros.length;
+
+    const conteo = new Map([...veredasPorId.values()].map((v) => [v.nombre, 0]));
+    registros.forEach((r) => r.orden_visita.forEach((nombre) => {
+      conteo.set(nombre, (conteo.get(nombre) || 0) + 1);
+    }));
+    const items = [...conteo.entries()]
+      .sort((a, b) => a[1] - b[1])
+      .map(([nombre, veces]) => ({ nombre, valor: veces, etiqueta: veces === 0 ? "Nunca" : `${veces}×` }));
+    renderBarras("chartCobertura", items, (it) => it.valor === 0 ? "var(--err)" : "var(--accent-2)");
+  } catch (e) {
+    mostrarError(`No se pudo calcular la cobertura: ${e.message}`);
+  }
+}
+
+async function actualizarDashboard() {
+  actualizarDashboardVulnerabilidad();
+  await actualizarDashboardCobertura();
 }
 
 // ---------- generar ruta ----------
@@ -339,6 +406,7 @@ async function generarRuta() {
     dibujarRuta(resp, [sede.lat, sede.lon]);
 
     await refrescarAuditoria();
+    await actualizarDashboardCobertura(); // la cobertura cambia con cada ruta nueva
   } catch (e) {
     mostrarError(`No se pudo generar la ruta: ${e.message}`);
   } finally {
@@ -391,6 +459,7 @@ const refrescarIndicePorPesos = debounce(async () => {
   try {
     await cargarVeredasCoordinacion();
     dibujarVeredas();
+    actualizarDashboardVulnerabilidad();
   } catch (e) {
     mostrarError(`No se pudo recalcular el índice: ${e.message}`);
   }
